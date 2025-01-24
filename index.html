@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ranking Table</h1>
+    <div id="table-container">
+        <p>Loading table...</p>
+    </div>
+    <script>
+        // 解析 Query String
+        const queryString = new URLSearchParams(window.location.search);
+        const rawData = queryString.get('data'); // 獲取 `data` 部分
+
+        if (rawData) {
+            // 解析資料
+            const data = rawData.split(';').map(item => {
+                const [rank, name, score] = item.split(',');
+                return { rank: parseInt(rank), name: decodeURIComponent(name), score: parseInt(score) };
+            });
+
+            // 動態生成表格
+            const tableContainer = document.getElementById('table-container');
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            // 建立表頭
+            thead.innerHTML = `
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Score</th>
+                </tr>
+            `;
+
+            // 建立表格內容
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.rank}</td>
+                    <td>${row.name}</td>
+                    <td>${row.score}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 組裝表格
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            tableContainer.innerHTML = ''; // 清空 Loading 訊息
+            tableContainer.appendChild(table);
+        } else {
+            // 如果沒有資料
+            document.getElementById('table-container').innerHTML = '<p>No data provided.</p>';
+        }
+    </script>
+</body>
+</html>
