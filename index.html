@@ -1,82 +1,120 @@
 <!DOCTYPE html>
-<!-- Trigger GitHub Pages redeploy -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ranking Table</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-    </style>
+    <title>XP Distribution Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.4.0/chartjs-plugin-annotation.min.js"></script>
 </head>
 <body>
-    <h1>Ranking Table</h1>
-    <div id="table-container">
-        <p>Loading table...</p>
-    </div>
+    <h1>XP Distribution by Rank</h1>
+    <canvas id="xpChart" width="800" height="400"></canvas>
     <script>
-        // 解析 Query String
+        // 解析 Query String 獲取資料
         const queryString = new URLSearchParams(window.location.search);
-        const rawData = queryString.get('data'); // 獲取 `data` 部分
+        const rawData = queryString.get('data');
 
-        if (rawData) {
-            // 解析資料
-            const data = rawData.split(';').map(item => {
-                const [rank, name, score] = item.split(',');
-                return { rank: parseInt(rank), name: decodeURIComponent(name), score: parseInt(score) };
-            });
-
-            // 動態生成表格
-            const tableContainer = document.getElementById('table-container');
-            const table = document.createElement('table');
-            const thead = document.createElement('thead');
-            const tbody = document.createElement('tbody');
-
-            // 建立表頭
-            thead.innerHTML = `
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Score</th>
-                </tr>
-            `;
-
-            // 建立表格內容
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.rank}</td>
-                    <td>${row.name}</td>
-                    <td>${row.score}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // 組裝表格
-            table.appendChild(thead);
-            table.appendChild(tbody);
-            tableContainer.innerHTML = ''; // 清空 Loading 訊息
-            tableContainer.appendChild(table);
-        } else {
-            // 如果沒有資料
-            document.getElementById('table-container').innerHTML = '<p>No data provided.</p>';
+        if (!rawData) {
+            document.body.innerHTML = '<h1>Error: No data provided in the URL.</h1>';
+            throw new Error('No data provided');
         }
+
+        // 將資料轉換為物件陣列
+        const parsedData = rawData.split(';').map(item => {
+            const [rank, name, score] = item.split(',');
+            return { rank: parseInt(rank), name: decodeURIComponent(name), score: parseInt(score) };
+        });
+
+        // 提取 XP 和名稱
+        const data = {
+            labels: parsedData.map(d => d.rank).reverse(), // 排名（從低到高）
+            datasets: [{
+                label: 'XP',
+                data: parsedData.map(d => d.score).reverse(), // XP 值（從低到高）
+                borderColor: 'green',
+                backgroundColor: function(context) {
+                    const rank = 20 - context.dataIndex; // Rank
+                    if (rank <= 8) return 'red'; // 前 4 名
+                    if (rank >= 16) return 'blue'; // 後 10 名
+                    return 'gray'; // 中間
+                },
+                pointBackgroundColor: function(context) {
+                    const rank = 20 - context.dataIndex; // Rank
+                    if (rank <= 8) return 'red'; // 前 4 名
+                    if (rank >= 16) return 'blue'; // 後 10 名
+                    return 'gray'; // 中間
+                },
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                tension: 0,
+                fill: false
+            }]
+        };
+
+        const names = parsedData.map(d => d.name).reverse(); // 名字（從低到高）
+
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            font: {
+                                size: 14,
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `XP: ${context.raw}`;
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: names.map((name, index) => ({
+                            type: 'label',
+                            xValue: index + 1,
+                            yValue: data.datasets[0].data[index],
+                            content: [name],
+                            backgroundColor: 'rgba(255,255,255,0.7)',
+                            borderWidth: 1,
+                            borderColor: 'black',
+                            xAdjust: 0,
+                            yAdjust: 20,
+                        }))
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Rank'
+                        },
+                        ticks: {
+                            callback: function(value, index) {
+                                return data.labels[index]; // 顯示排名
+                            }
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'XP'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        };
+
+        // 初始化 Chart.js
+        const ctx = document.getElementById('xpChart').getContext('2d');
+        new Chart(ctx, config);
     </script>
 </body>
 </html>
