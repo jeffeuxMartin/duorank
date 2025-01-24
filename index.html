@@ -36,13 +36,13 @@
                 backgroundColor: function(context) {
                     const rank = 20 - context.dataIndex; // Rank
                     if (rank <= 8) return 'red'; // 前 4 名
-                    if (rank >= 16) return 'blue'; // 後 10 名
+                    if (rank >= 1+16) return 'blue'; // 後 10 名
                     return 'gray'; // 中間
                 },
                 pointBackgroundColor: function(context) {
                     const rank = 20 - context.dataIndex; // Rank
                     if (rank <= 8) return 'red'; // 前 4 名
-                    if (rank >= 16) return 'blue'; // 後 10 名
+                    if (rank >= 1+16) return 'blue'; // 後 10 名
                     return 'gray'; // 中間
                 },
                 pointRadius: 5,
